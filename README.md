@@ -35,11 +35,11 @@ $ cd DeepMir
   ```bash
   data/
   |---rfam_mirna/
-	|---RF00027.fa
+		|---RF00027.fa
   	|---RF00047.fa
-	|---RF00051.fa
+		|---RF00051.fa
   		...
-```
+  ```
   
   ***OUTPUT:*** The directory containing generated files will be save in `inputdir/` by default. The default name of the directory is like: `165_120_onehot` . `165` is the number of the classes in this dataset, `120` is the number of sequences of each family, `onehot` is the encoding method.
   
