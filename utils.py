@@ -10,43 +10,42 @@ import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
 
-def cmd():
+def cmd_onehot():
     parser = argparse.ArgumentParser(description="ARGUMENTS")
 
     # argument for dataset
     parser.add_argument(
         'dataset',
         type=str,
-        help="Dataset directory (MUST in `data` directory)"
+        help="Dataset directory (MUST in `inputdir` directory)"
     )
 
     parser.add_argument(
-        "--num_classes",
+        "num_classes",
         type=int,
-        default=143,
-        help="Number of RNA families (default: 143)")
+        help="Number of families")
 
     parser.add_argument(
         "--seq_length",
-        default=312,  # 95-percentile length in Rfam dataset
+        default=200,
         type=int,
-        help="Length of RNA sequence (default: 312)")
+        help="Length of RNA sequence (default: 200)")
 
     # argument for training
-    parser.add_argument(
-        '--model',
-        type=str,
-        default='DeepRfam',
-        help="Choose model (DeepRfam(default), DeepRfam_deep, DeepRfam_lenet, ImgFam, L4Fam, L4BNFam, L5CFam, L5Fam, "
-             "L5CFam_nopooling, L5CFam_dilation, L5CFam_ave, L5CFam_temp, L6Fam, L7CFam, Github_scnn)"
-    )
+    # parser.add_argument(
+    #     '--model',
+    #     type=str,
+    #     default='DeepRfam',
+    #     help="Choose model (DeepRfam(default), DeepRfam_deep, DeepRfam_lenet, ImgFam, L4Fam, L4BNFam, L5CFam, L5Fam, "
+    #          "L5CFam_nopooling, L5CFam_dilation, L5CFam_ave, L5CFam_temp, L6Fam, L7CFam, Github_scnn)"
+    # )
 
-    parser.add_argument(
-        '--encode',
-        type=str,
-        default='RNA_onehot',
-        help="Choose encoding method (RNA_onehot(default), RNA_word#<int>, RNA_img, RNA_fimg, RNA_pimg)"
-    )
+    # parser.add_argument(
+    #     '--encode',
+    #     type=str,
+    #     default='RNA_onehot',
+    #     help="Choose encoding method (RNA_onehot(default), RNA_img, RNA_fimg, RNA_pimg)"
+    # )
 
     parser.add_argument(
         '--learning_rate',
@@ -69,41 +68,41 @@ def cmd():
         help="Number of epochs to train (default: 5)"
     )
 
-    parser.add_argument(
-        '--train_file',
-        type=str,
-        default=f'train.csv',
-        help="Input data for training (default: train.csv)"
-    )
-
-    parser.add_argument(
-        '--valid_file',
-        type=str,
-        default=f'validation.csv',
-        help="Input data for validation (default: validation.csv)"
-    )
-
-    parser.add_argument(
-        '--test_file',
-        type=str,
-        default='test.csv',
-        help="Input data for training (default: test.csv)"
-    )
-
-    parser.add_argument(
-        '--family_dict_file',
-        type=str,
-        default='fam_label.csv',
-        help="Input data for training (default: fam_label.csv)"
-    )
-
+    # parser.add_argument(
+    #     '--train_file',
+    #     type=str,
+    #     default=f'train.csv',
+    #     help="Input data for training (default: train.csv)"
+    # )
+    #
+    # parser.add_argument(
+    #     '--valid_file',
+    #     type=str,
+    #     default=f'validation.csv',
+    #     help="Input data for validation (default: validation.csv)"
+    # )
+    #
+    # parser.add_argument(
+    #     '--test_file',
+    #     type=str,
+    #     default='test.csv',
+    #     help="Input data for training (default: test.csv)"
+    # )
+    #
+    # parser.add_argument(
+    #     '--family_dict_file',
+    #     type=str,
+    #     default='fam_label.csv',
+    #     help="Input data for training (default: fam_label.csv)"
+    # )
+    #
     parser.add_argument(
         '--filter_sizes',
-        default=[24, 36, 48, 60, 72, 84, 96, 108],
+        default=[2, 4, 6, 8, 10, 12, 14, 16],
         type=int,
         nargs='+',
         help="Space separated list of motif filter lengths. (ex, --filter_sizes 4 8 12)\
-            \n(default: [24, 36, 48, 60, 72, 84, 96, 108])"
+            \n(default: [2, 4, 6, 8, 10, 12, 14, 16])"
     )
 
     parser.add_argument(
@@ -156,12 +155,12 @@ def cmd():
         help="Directory for logging. (default: log)"
     )
 
-    parser.add_argument(
-        '--remark',
-        type=str,
-        default=None,
-        help="Remark additional information"
-    )
+    # parser.add_argument(
+    #     '--remark',
+    #     type=str,
+    #     default=None,
+    #     help="Remark additional information"
+    # )
 
     # version
     parser.add_argument(
@@ -172,58 +171,48 @@ def cmd():
 
     args = parser.parse_args()
 
-    assert (args.model in ['DeepRfam', 'DeepRfam_deep', 'DeepRfam_lenet', 'ImgFam', 'L4Fam', 'L4BNFam', 'L5Fam',
-                           'L5CFam', 'L5CFam_nopooling', 'L5CFam_dilation', 'L5CFam_temp', 'L6Fam', 'L7CFam', 'Github_scnn', 'DNA',
-                           'L5CFam_ave'])
-    assert (args.encode.split('#').pop(0) in ['RNA_onehot', 'RNA_word', 'RNA_img', 'RNA_fimg', 'RNA_pimg'])
+    # assert (args.model in ['DeepRfam', 'L5CFam'])
+    # assert (args.encode.split('#').pop(0) in ['RNA_onehot', 'RNA_img'])
 
     return args
 
 
-def cmd_k_fold():
+def cmd_img():
     parser = argparse.ArgumentParser(description="ARGUMENTS")
 
     # argument for dataset
     parser.add_argument(
         'dataset',
         type=str,
-        help="Dataset directory (MUST in `data` directory)"
+        help="Dataset directory (MUST in `inputdir` directory)"
     )
 
     parser.add_argument(
-        '--k_fold',
+        "num_classes",
         type=int,
-        default=10,
-        help='Using k_fold cross validation to evaluate the performace of the model. \
-             (default: 10)'
-    )
-
-    parser.add_argument(
-        "--num_classes",
-        type=int,
-        default=143,
-        help="Number of RNA families (default: 143)")
+        help="Number of families")
 
     parser.add_argument(
         "--seq_length",
-        default=312,  # 95-percentile length in Rfam dataset
+        default=200,
         type=int,
-        help="Length of RNA sequence (default: 312)")
+        help="Length of RNA sequence (default: 200)")
 
     # argument for training
-    parser.add_argument(
-        '--model',
-        type=str,
-        default='DeepRfam',
-        help="Choose model: DeepRfam(default), DeepRfam_deep"
-    )
+    # parser.add_argument(
+    #     '--model',
+    #     type=str,
+    #     default='DeepRfam',
+    #     help="Choose model (DeepRfam(default), DeepRfam_deep, DeepRfam_lenet, ImgFam, L4Fam, L4BNFam, L5CFam, L5Fam, "
+    #          "L5CFam_nopooling, L5CFam_dilation, L5CFam_ave, L5CFam_temp, L6Fam, L7CFam, Github_scnn)"
+    # )
 
-    parser.add_argument(
-        '--encode',
-        type=str,
-        default='RNA_onehot',
-        help="Choose encoding method (default: RNA_onehot)"
-    )
+    # parser.add_argument(
+    #     '--encode',
+    #     type=str,
+    #     default='RNA_onehot',
+    #     help="Choose encoding method (RNA_onehot(default), RNA_img, RNA_fimg, RNA_pimg)"
+    # )
 
     parser.add_argument(
         '--learning_rate',
@@ -234,9 +223,9 @@ def cmd_k_fold():
 
     parser.add_argument(
         '--batch_size',
-        default=64,
+        default=32,
         type=int,
-        help='Batch size (default: 64)'
+        help='Batch size (default: 32)'
     )
 
     parser.add_argument(
@@ -247,47 +236,33 @@ def cmd_k_fold():
     )
 
     parser.add_argument(
-        '--train_file',
-        type=str,
-        default=f'train.csv',
-        help="Input data for training and testing (default: train.csv)"
-    )
-
-    parser.add_argument(
-        '--family_dict_file',
-        type=str,
-        default='fam_label.csv',
-        help="Input data for training (default: fam_label.csv)"
-    )
-
-    parser.add_argument(
         '--filter_sizes',
-        default=[24, 36, 48, 60, 72, 84, 96, 108],
+        default=[2, 2],
         type=int,
         nargs='+',
-        help="Space separated list of motif filter lengths. (ex, --filter_sizes 4 8 12)\
-            \n(default: [24, 36, 48, 60, 72, 84, 96, 108])"
+        help="Space separated list of motif filter lengths. (e.g., --filter_sizes 3 5) (default: [2, 2])"
     )
 
     parser.add_argument(
         '--num_filters',
-        default=256,
+        default=[32, 64],
         type=int,
-        help='Number of filters per kernel (default: 256)'
+        nargs='+',
+        help='Number of filters per kernel in two convolution layers. (e.g., --num_filters 16 32) (default: [32, 64])'
     )
 
     parser.add_argument(
         '--keep_prob',
         type=float,
-        default=0.7,
+        default=0.5,
         help='Rate to be kept for dropout. (default: 0.7)'
     )
 
     parser.add_argument(
         '--num_hidden',
         type=int,
-        default=512,
-        help='Number of neurons in hidden layer. (default: 512)'
+        default=[128, 64],
+        help='Number of neurons in first two hidden layers. (e.g., --num_hidden 64 32) (default: [128, 64])'
     )
 
     parser.add_argument(
@@ -319,12 +294,12 @@ def cmd_k_fold():
         help="Directory for logging. (default: log)"
     )
 
-    parser.add_argument(
-        '--remark',
-        type=str,
-        default=None,
-        help="Remark additional information"
-    )
+    # parser.add_argument(
+    #     '--remark',
+    #     type=str,
+    #     default=None,
+    #     help="Remark additional information"
+    # )
 
     # version
     parser.add_argument(
@@ -334,6 +309,9 @@ def cmd_k_fold():
     )
 
     args = parser.parse_args()
+
+    # assert (args.model in ['DeepRfam', 'L5CFam'])
+    # assert (args.encode.split('#').pop(0) in ['RNA_onehot', 'RNA_img'])
 
     return args
 

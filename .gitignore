@@ -102,3 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+.idea/
+temp_script.py
+rfam_temp/
+rfam_mirna/

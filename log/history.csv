@@ -1,0 +1,1 @@
+Time,Name,Dataset,Accuracy,Filter_size,Num_filters,Batch_size,Num_epochs,Dropout,Num_hidden,Learning_rate,Loss,Optimizer,Remarks

@@ -1,4 +1,7 @@
 import os
+import shutil
+import glob
+from pathlib import Path
 import random
 import cv2
 import argparse
@@ -13,49 +16,41 @@ def cmd():
     parser.add_argument(
         "num_per_fam",
         type=int,
-        help="Number of sequences per family \
-                (Needs to be divisible by `split_ratio`)(num_per_fam=0 means unliminited number of sequences)"
+        help="Number of sequences per family (Needs to be divisible by `split_ratio`)"
     )
 
     parser.add_argument(
-        "out_dir_name",
+        "mat_type",
         type=str,
-        help="Name of output directory name which saving the data. (Add the number of families automaticlly)"
+        help="The type of dataset. (pair, prob, mixed)"
     )
 
     parser.add_argument(
         "--fasta_dir",
         type=str,
-        default="clean_fasta_files",
-        help="Fasta Directory (default: clean_fasta_files)"
+        default="rfam_mirna",
+        help="The directory saving fasta file (default: rfam_mirna)"
     )
 
     parser.add_argument(
         "--max_length",
         type=int,
-        default=312,
-        help="Maximal length of sequences (default: 312)"  # 95-percentile length in Rfam dataset
+        default=200,
+        help="The threshold of the maximal length of sequences (default: 200), all longer ones will be filtered out."
     )
 
-    parser.add_argument(
-        "--min_length",
-        type=int,
-        default=0,
-        help="Minimal length of sequences (default: 0)"
-    )
+    # parser.add_argument(
+    #     "--min_length",
+    #     type=int,
+    #     default=0,
+    #     help="Minimal length of sequences (default: 0)"
+    # )
 
     parser.add_argument(
         "--split_ratio",
         type=int,
         default=6,
-        help="Split ratio used to divide the dataset. (default: 6)"
-    )
-
-    parser.add_argument(
-        "--mat_type",
-        type=str,
-        default='pair',
-        help="The type of dataset. (pair(default), prob, prob_pair, prob_pair_h)"
+        help="The split ratio of splitting the original dataset into train /test / validation (default: 6)"
     )
 
     parser.add_argument(
@@ -69,22 +64,28 @@ def cmd():
         "--coding",
         type=int,
         default=1,
-        help="The coding methods used to generate matrix. (Optional: 1,2) (default: 1)"
+        help="The pair coding methods (default: 1). (1: ordered) (2: unordered)"
     )
 
     parser.add_argument(
-        "--data_dir",
-        default="../data",
+        "--output_dir",
+        default="inputdir",
         type=str,
-        help="Directory for saving csv (default: ../data)"
+        help="Directory for saving csv (default: inputdir)"
+    )
+
+    parser.add_argument(
+        "--out_dir_name",
+        type=str,
+        default=None,
+        help="Name of output directory name which saving the data. (Add the number of families automaticlly)"
     )
 
     parser.add_argument(
         "--mode",
         default=3,
         type=int,
-        help="Choose the mode of generating dataset. (3: train+validation+test) \
-                (2: train+test) (1: train) (0: custom mode) (default: 3)"
+        help="Choose the mode of generating dataset (default: 3). (3: train+validation+test) (2: train+test) (1: test)"
     )
 
     parser.add_argument(
@@ -98,7 +99,7 @@ def cmd():
 
     # check validity
     assert (args.num_per_fam % args.split_ratio == 0)
-    assert (args.mat_type in ['pair', 'prob', 'prob_pair', 'prob_pair_h'])
+    assert (args.mat_type in ['pair', 'prob', 'mixed'])
 
     return args
 
@@ -128,19 +129,21 @@ class f2i(object):
         """
         # check if current folder already has `temp_seq`
         if 'temp_seq' in os.listdir(os.getcwd()):
-            os.system("rm -r temp_seq")
+            # os.system("rm -r temp_seq")
+            shutil.rmtree("temp_seq")
         else:
             pass
         # generate a new directory to save fasta file.
-        os.system("mkdir temp_seq")
+        # os.system("mkdir temp_seq")
+        os.makedirs("temp_seq")
 
         # Extract a specific number of required sequences.
-        fasta_dir_list = os.listdir(self.fasta_dir)
+        fasta_dir_list = os.listdir(f"data/{self.fasta_dir}")
         # i = 0   # initialization
 
         print('Extracting required sequences ... ...')
         for fi in tqdm(fasta_dir_list):
-            filename = os.path.join(self.fasta_dir, fi)
+            filename = os.path.join("data", self.fasta_dir, fi)
             length = [len(i) for i in SeqIO.parse(filename, "fasta")]
             length_filter = [val for val in length
                              if (self.min_length <= val <= self.max_length)]
@@ -173,9 +176,12 @@ class f2i(object):
                     test_seq = seq_extra[split_1 + split_2:split_1 + split_2 * 2]
 
                     # create diretory to save fasta file
-                    os.system(f"mkdir -p temp_seq/train/{family_name}")
-                    os.system(f"mkdir -p temp_seq/validation/{family_name}")
-                    os.system(f"mkdir -p temp_seq/test/{family_name}")
+                    # os.system(f"mkdir -p temp_seq/train/{family_name}")
+                    # os.system(f"mkdir -p temp_seq/validation/{family_name}")
+                    # os.system(f"mkdir -p temp_seq/test/{family_name}")
+                    os.makedirs(f"temp_seq/train/{family_name}")
+                    os.makedirs(f"temp_seq/validation/{family_name}")
+                    os.makedirs(f"temp_seq/test/{family_name}")
 
                     # save sequences to the fasta file in the train_dp_path and test_dp_path respectively
                     SeqIO.write(train_seq, f"temp_seq/train/{family_name}/{family_name}.fa", "fasta")
@@ -189,8 +195,10 @@ class f2i(object):
                     test_seq = seq_extra[split_1:split_1 + split_2]
 
                     # create diretory to save fasta file
-                    os.system(f"mkdir -p temp_seq/train/{family_name}")
-                    os.system(f"mkdir -p temp_seq/test/{family_name}")
+                    # os.system(f"mkdir -p temp_seq/train/{family_name}")
+                    # os.system(f"mkdir -p temp_seq/test/{family_name}")
+                    os.makedirs(f"temp_seq/train/{family_name}")
+                    os.makedirs(f"temp_seq/test/{family_name}")
 
                     # save sequences to the fasta file in the train_dp_path and test_dp_path respectively
                     SeqIO.write(train_seq, f"temp_seq/train/{family_name}/{family_name}.fa", "fasta")
@@ -198,32 +206,15 @@ class f2i(object):
 
                 if args.mode == 1:
                     if self.num_per_fam == 0:
-                        train_seq = seq_extra[:500]
+                        test_seq = seq_extra[:]
                     else:
-                        train_seq = seq_extra[:self.num_per_fam]
+                        test_seq = seq_extra[:self.num_per_fam]
 
                     # create diretory to save fasta file
-                    os.system(f"mkdir -p temp_seq/test/{family_name}")
+                    # os.system(f"mkdir -p temp_seq/test/{family_name}")
+                    os.makedirs(f"temp_seq/test/{family_name}")
 
                     # save sequences to the fasta file in the train_dp_path and test_dp_path respectively
-                    SeqIO.write(train_seq, f"temp_seq/test/{family_name}/{family_name}.fa", "fasta")
-
-                if args.mode == 0:
-                    split_1 = int(self.num_per_fam / self.split_ratio * (self.split_ratio - 1))
-                    split_2 = int(self.num_per_fam / self.split_ratio)
-                    train_seq = seq_extra[: split_1]
-                    test_seq = seq_extra[split_1:split_1 + split_2]
-                    # validation_seq = seq_extra[split_1 + split_2:10000]
-                    validation_seq = test_seq
-
-                    # create diretory to save fasta file
-                    os.system(f"mkdir -p temp_seq/train/{family_name}")
-                    os.system(f"mkdir -p temp_seq/validation/{family_name}")
-                    os.system(f"mkdir -p temp_seq/test/{family_name}")
-
-                    # save sequences to the fasta file in the train_dp_path and test_dp_path respectively
-                    SeqIO.write(train_seq, f"temp_seq/train/{family_name}/{family_name}.fa", "fasta")
-                    SeqIO.write(validation_seq, f"temp_seq/validation/{family_name}/{family_name}.fa", "fasta")
                     SeqIO.write(test_seq, f"temp_seq/test/{family_name}/{family_name}.fa", "fasta")
 
                 # print(f"No.{i+1} family: {fi} have {len(length_filter)} satisfied sequences.")
@@ -238,11 +229,13 @@ class f2i(object):
 
         # check if current folder already has `temp_dp`
         if 'temp_dp' in os.listdir(os.getcwd()):
-            os.system("rm -r temp_dp")
+            # os.system("rm -r temp_dp")
+            shutil.rmtree("temp_dp")
         else:
             pass
         # generate a new directory to save dot plot file.
-        os.system("cp -r temp_seq temp_dp")
+        # os.system("cp -r temp_seq temp_dp")
+        shutil.copytree("temp_seq", "temp_dp")
 
         dir_list = os.listdir("temp_dp")
         print('Generating dot plot file ... ...')
@@ -250,7 +243,14 @@ class f2i(object):
 
             sub_filelist = os.listdir(f"temp_dp/{sub_dir}")
             for fam in tqdm(sub_filelist):
-                os.system(f"cd temp_dp/{sub_dir}/{fam}\nRNAfold -p -o < {fam}.fa\nrm *fold *ss.ps *fa")
+                # os.system(f"cd temp_dp/{sub_dir}/{fam}\nRNAfold -p -o < {fam}.fa\nrm *fold *ss.ps *fa")
+                os.system(f"cd temp_dp/{sub_dir}/{fam}\nRNAfold -p -o < {fam}.fa")
+                for p in Path(f"temp_dp/{sub_dir}/{fam}").glob("*fold"):
+                    p.unlink()
+                for p in Path(f"temp_dp/{sub_dir}/{fam}").glob("*ss.ps"):
+                    p.unlink()
+                for p in Path(f"temp_dp/{sub_dir}/{fam}").glob("*fa"):
+                    p.unlink()
 
     def generate_mat(self, filename, MatrixSize, ProbThreshold, MPair_coding):
         """Function used to generate matrix.
@@ -259,10 +259,10 @@ class f2i(object):
             Matrix containing sequence 1st and 2nd structure.
         """
         # initialize the coding methods
-        coding_1 = {'au': 40, 'AU': 40, 'UA': 80, 'ua': 80, 'GC': 120, 'gc': 120, 'CG': 160, 'cg': 160, 'GU': 200,
-                    'gu': 200, 'UG': 240, 'ug': 240}
-        coding_2 = {'au': 80, 'AU': 80, 'UA': 80, 'ua': 80, 'GC': 160, 'gc': 160, 'CG': 160, 'cg': 160, 'GU': 240,
-                    'gu': 240, 'UG': 240, 'ug': 240}
+        coding_1 = {'au': 42.5, 'AU': 42.5, 'UA': 85, 'ua': 85, 'GC': 127.5, 'gc': 127.5, 'CG': 170, 'cg': 170,
+                    'GU': 212.5, 'gu': 212.5, 'UG': 255, 'ug': 255}
+        coding_2 = {'au': 85, 'AU': 85, 'UA': 85, 'ua': 85, 'GC': 170, 'gc': 170, 'CG': 170, 'cg': 170,
+                    'GU': 255, 'gu': 255, 'UG': 255, 'ug': 255}
 
         # function used to generate the matrix of the base pair
         def MPair(infolist, MatrixSize, coding):
@@ -335,7 +335,9 @@ class f2i(object):
                 re_seq = False
                 re_prob = False
                 SeqInf = []
+                # i = 0
                 for i in range(10000000000):
+                # while():
                     if re_seq:
                         if lines[i][0] in ['A', 'C', 'G', 'U', 'N', 'T',
                                            'Y', 'R', 'W', 'M', 'K', 'S',
@@ -360,13 +362,15 @@ class f2i(object):
                     if lines[i] == "%start of base pair probability data":
                         re_prob = True
 
+                    # i += 1
+
             return SeqInf
 
         # generate the matrix with 3 channels:
         # channel 0: base pairing probabilities
         # channel 1: base pair
         # channel 2: zeros
-        if args.mat_type == 'prob_pair':
+        if args.mat_type == 'mixed':
             # def GM_3D_MPair_MProb(filename, MatrixSize, ProbThreshold, MPair_coding):
             matrix = np.zeros((MatrixSize, MatrixSize, 3))
 
@@ -390,14 +394,6 @@ class f2i(object):
             SeqInf = dp_parser(filename)
             matrix = MProb(SeqInf, MatrixSize)
 
-        # generate the matrix with 1 channels:
-        # channel 0: top_half--base pairing probabilities, bottle_half--base pair
-        elif args.mat_type == 'prob_pair_h':
-            # def GM_2D_MProb(filename, MatrixSize, ProbThreshold, MPair_coding=None):
-
-            SeqInf = dp_parser(filename)
-            matrix = MProbPair(SeqInf, MatrixSize, MPair_coding)
-
         return matrix  # return a (matrix_size, matrix_size) array
 
     def generate_dataset(self):
@@ -415,22 +411,26 @@ class f2i(object):
 
         # check if current folder already has `temp_dp`
         if 'temp_img' in os.listdir(os.getcwd()):
-            os.system("rm -r temp_img")
+            # os.system("rm -r temp_img")
+            shutil.rmtree("temp_img")
         else:
             pass
         # generate a new directory to save fasta file.
-        os.system("mkdir temp_img")
+        # os.system("mkdir temp_img")
+        os.makedirs("temp_img")
 
         dir_list = os.listdir("temp_dp")
         print("Generating images ... ...")
         for sub_dir in tqdm(dir_list):
             # create directory to save dataset
-            os.system(f"mkdir -p temp_img/{sub_dir}")
+            # os.system(f"mkdir -p temp_img/{sub_dir}")
+            os.makedirs(f"temp_img/{sub_dir}")
 
             fam_list = os.listdir(f"temp_dp/{sub_dir}")
             for fam in tqdm(fam_list):
                 # creat sirectory to save 'train', 'validation', 'test' dataset
-                os.system(f"mkdir -p temp_img/{sub_dir}/{fam}")
+                # os.system(f"mkdir -p temp_img/{sub_dir}/{fam}")
+                os.makedirs(f"temp_img/{sub_dir}/{fam}")
 
                 dp_file_list = os.listdir(f"temp_dp/{sub_dir}/{fam}")
                 ids = 1
@@ -444,15 +444,20 @@ class f2i(object):
                     cv2.imwrite(f"temp_img/{sub_dir}/{fam}/{fam}_{ids:03}.png", mat)
                     ids += 1
 
-        os.system(f"mv temp_img ../data/{len(fam_list)}_{args.out_dir_name}")
-        os.system(f"mv temp_seq ../data/{len(fam_list)}_{args.out_dir_name}/sequence")
-        os.system(f"mv temp_dp  ../data/{len(fam_list)}_{args.out_dir_name}/dot_plot")
+        if args.out_dir_name is None:
+            out_name = f"{len(fam_list)}_{self.num_per_fam}_{args.mat_type}"
+        else:
+            out_name = f"{len(fam_list)}_{args.out_dir_name}_{args.mat_type}"
+
+        shutil.move("temp_img", f"{self.data_dir}/{out_name}")
+        shutil.move("temp_seq", f"{self.data_dir}/{out_name}/sequence")
+        shutil.move("temp_dp", f"{self.data_dir}/{out_name}/dot_plot")
 
 
 if __name__ == "__main__":
     args = cmd()
 
-    seq = f2i(args.fasta_dir, args.data_dir, args.out_dir_name, args.min_length, args.max_length, args.num_per_fam,
+    seq = f2i(args.fasta_dir, args.output_dir, args.out_dir_name, 0, args.max_length, args.num_per_fam,
               args.split_ratio)
     seq.generate_dp()
     seq.generate_dataset()
