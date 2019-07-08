@@ -41,14 +41,14 @@ $ cd DeepMir
   		...
   ```
   
-  ***OUTPUT:*** The directory containing generated files will be save in `inputdir/` by default. The default name of the directory is like: `165_120_onehot` . `165` is the number of the classes in this dataset, `120` is the number of sequences of each family, `onehot` is the encoding method.
+  ***OUTPUT:*** The directory containing generated files will be save in `inputdir/` by default. The default name of the directory is like: `165_60_onehot` . `165` is the number of the classes in this dataset, `60` is the number of sequences of each family, `onehot` is the encoding method.
   
   * For pair/ probability/ mixed matrix method:
 
-  > One example of parameter setting for generating `Rfam-120` using pair matrix:
+  > One example of parameter setting for generating `Rfam-60` using pair matrix:
 
   ```bash
-  $ python fasta2img.py 120 pair \
+  $ python fasta2img.py 60 pair \
     --fasta_dir rfam_mirna \
     --max_length 200 \
     --split_ratio 6 \
@@ -61,10 +61,10 @@ $ cd DeepMir
   
   * For one-hot matrix method:
   
-  > One example of parameter setting for generating `Rfam-120` using one-hot matrix:
+  > One example of parameter setting for generating `Rfam-60` using one-hot matrix:
   
   ```bash
-  $ python fasta2onehot.py 120 \
+  $ python fasta2onehot.py 60 \
     --fasta_dir rfam_mirna \
     --max_length 200 \
     --split_ratio 6 \
@@ -81,10 +81,10 @@ $ cd DeepMir
 
   Use `train_img.py` to train the pair/ probability/ mixed matrix model, use `train_onehot.py` to train the one-hot matrix model.
 
-  > One example of parameter setting for training pair matrix model using dataset from `165_120_pair`
+  > One example of parameter setting for training pair matrix model using dataset from `165_60_pair`
 
   ```bash
-  $ python train_img.py 165_120_pair 165 \
+  $ python train_img.py 165_60_pair 165 \
     --seq_length 200 \
     --learning_rate 0.001 \
     --batch_size 32 \
@@ -102,7 +102,7 @@ $ cd DeepMir
 
 # Data
 
-All datasets can be download from [HERE](). Please read the `README.txt` before using.
+All datasets can be download from [HERE](https://1drv.ms/u/s!AutVZjbvRAR7i_IKbf-ef32QmifEdw?e=qb9CXP). Please read the `README.txt` before using.
 
 
 
